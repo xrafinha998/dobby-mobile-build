@@ -1,0 +1,41 @@
+name: Build Dobby Android ARM64
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Clone Dobby
+      run: git clone https://github.com/jmpews/Dobby.git
+
+    - name: Install NDK
+      run: |
+        sudo apt update
+        sudo apt install unzip -y
+        wget https://dl.google.com/android/repository/android-ndk-r26d-linux.zip
+        unzip android-ndk-r26d-linux.zip
+
+    - name: Build
+      run: |
+        cd Dobby
+        mkdir build
+        cd build
+        cmake .. \
+        -DCMAKE_TOOLCHAIN_FILE=../../android-ndk-r26d/build/cmake/android.toolchain.cmake \
+        -DANDROID_ABI=arm64-v8a \
+        -DANDROID_PLATFORM=android-24 \
+        -DDOBBY_GENERATE_STATIC=ON \
+        -DDOBBY_GENERATE_SHARED=OFF
+        make -j4
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: libdobby
+        path: Dobby/build/libdobby.a
